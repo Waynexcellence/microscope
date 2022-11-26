@@ -12,15 +12,15 @@
 #include <time.h>
 #include <limits.h>
 
-char human_info[30] = "./log/human_info.txt";
-char bacteria_info[30] = "./log/bacteria_info.txt";
+char human_info[30] = "./log/human.txt";
+char bacteria_info[30] = "./log/bacteria.txt";
 
 char* character_input;
 char* enter_name;
 char* new_name;
 char** total_name;
 
-int info_fd = -1;
+int log_fd = -1;
 int num_account = -1;
 int mode = -1;
 int enter_ID = -1;
@@ -50,8 +50,8 @@ void get_character_input(){
 
 void get_num_account(){
 	char buf[10] = {};
-	lseek( info_fd , 10*sizeof(Status) , SEEK_SET );
-	read( info_fd , buf , sizeof(buf) );
+	lseek( log_fd , 10*sizeof(Status) , SEEK_SET );
+	read( log_fd , buf , sizeof(buf) );
 	sscanf( buf , "%d" , &num_account );
 }
 
@@ -63,9 +63,9 @@ void show_account(){
 	}
 	Status temp;
 	sleep(1);
-	lseek( info_fd , 0 , SEEK_SET );
+	lseek( log_fd , 0 , SEEK_SET );
 	for(int x=0;x<num_account;x++){
-		read( info_fd , &temp , sizeof(Status) );
+		read( log_fd , &temp , sizeof(Status) );
 		fprintf( stderr , "[System] #%d : %s\n", x , temp.name );
 		strcpy( total_name[x] , temp.name );
 	}
@@ -132,13 +132,13 @@ void push_new_name(){
 	temp.ATK = rand()%21+10;
 	temp.Defense = rand()%11+10;
 	temp.money = rand()%91+10;
-	lseek( info_fd , num_account*sizeof(Status) , SEEK_SET );
-	write( info_fd , &temp , sizeof(Status) );
+	lseek( log_fd , num_account*sizeof(Status) , SEEK_SET );
+	write( log_fd , &temp , sizeof(Status) );
 	num_account ++;
 	char buf[5] = {};
 	sprintf( buf , "%d" , num_account );
-	lseek( info_fd , 10*sizeof(Status) , SEEK_SET );
-	write( info_fd , buf , strlen(buf) );
+	lseek( log_fd , 10*sizeof(Status) , SEEK_SET );
+	write( log_fd , buf , strlen(buf) );
 }
 
 void get_enter_ID(){
@@ -187,8 +187,8 @@ int main(){
 	sleep(1);
 	fprintf( stderr , "[System] Your answer:");
 	get_character_input();
-	if( character_input[0] == 'h' ) info_fd = open( human_info , O_RDWR );
-	else                            info_fd = open( bacteria_info , O_RDWR );
+	if( character_input[0] == 'h' ) log_fd = open( human_info , O_RDWR );
+	else                            log_fd = open( bacteria_info , O_RDWR );
 	
 	fprintf( stderr , "\n" );
 	sleep(1);
@@ -212,6 +212,7 @@ int main(){
 			return 0;
 		}
 		fprintf( stderr , "[System] Please enter the name you want to call your new character:(less 50)\n");
+		sleep(1);
 		fprintf( stderr , "[System] The new name:");
 		
 		get_new_name();
@@ -220,6 +221,7 @@ int main(){
 		show_account();
 
 		fprintf( stderr , "[System] Do you want to log in?(yes/no)\n");
+		sleep(1);
 		fprintf( stderr , "[System] Your answer:");
 		
 		bool continue_enter = get_reply();
@@ -237,10 +239,12 @@ int main(){
 		return 0;
 	}
 	fprintf( stderr , "[System] Please enter a character name to log in.\n");
+	sleep(1);
 	fprintf( stderr , "[System] Your name:");
 	
 	get_enter_ID();
-	
+	fprintf( stderr , "\n");
+
 	int pid = fork();
 	int child_status = -1;
 	if( pid == 0 ){

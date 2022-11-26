@@ -10,6 +10,7 @@
 #include <sys/wait.h>
 #include <limits.h>
 #include <time.h>
+#include <sys/select.h>
 
 bool compare_exit( char* buf ){
 	char Exit_string[10] = "exit";
@@ -54,7 +55,7 @@ char get_choose(){
 	return buf[0];
 }
 
-bool random_question(){
+bool random_question( int* attribute ){
 	char buf[200] = {};
 	char correct_answer = 'X';
 	int fd = open( "./log/question.txt" , O_RDONLY );
@@ -62,6 +63,7 @@ bool random_question(){
 	int bacteria = rand()%4;
 	int question_position = rand() % num_question;
 	Question question;
+	*attribute = bacteria;
 
 	if     ( bacteria == 0 ) fprintf( stderr , "[Event] Bumping into a Smallpox, your HP will be taken because it cause you ill if WA.\n");
 	else if( bacteria == 1 ) fprintf( stderr , "[Event] Bumping into a HIV, your Defense will be weaker because your immunity system is affected if WA.\n");
@@ -95,13 +97,54 @@ bool random_question(){
 		fprintf( stderr , "(%c) %s ", c , question.option[should_appear] );
 		appeared[should_appear] = true;
 	}
-	fprintf( stderr , "\n[Event] Your answer:");
+	sleep(1);
+	fprintf( stderr , "\n");
+	fprintf( stderr , "[Event] Your answer:");
 	
 	char self_answer = get_choose();
 	fprintf( stderr , "\n");
 	if( self_answer != correct_answer ){
-		fprintf( stderr , "[Event] hehehe you got a WA, but nothing worry actually I just want to show AWA\n");
 		return false;
 	}
 	return true;
+}
+
+void pass_away( char* character , int ID , char* name ){
+	char file_name[30] = {};
+	char buf[100] = {};
+	sprintf( file_name , "./log/%s_info.txt" , character );
+	int fd = open( file_name , O_RDWR );
+	int num_account = -1;
+	perror("open_log");
+	
+	lseek( fd , 10*sizeof(Status) , SEEK_SET );
+	memset( buf , '\0' , 100 );
+	read( fd , buf , sizeof(buf) );
+	sscanf( buf , "%d" , &num_account );
+	num_account --;
+	memset( buf , '\0' , 100 );
+	sprintf( buf , "%d" , num_account );
+	lseek( fd , 10*sizeof(Status) , SEEK_SET );
+	write( fd , buf , strlen(buf) );
+	
+	Status temp;
+	for(int x=ID+1;x<=num_account;x++){
+		lseek( fd , x*sizeof(Status) , SEEK_SET );
+		read( fd , &temp , sizeof(Status) );
+		lseek( fd , (-2)*sizeof(Status) , SEEK_CUR );
+		write( fd , &temp , sizeof(Status) );
+	}
+
+
+	fprintf( stderr , "[System] QQQQ dear %s you leave us a cherish memory QAQ.\n", name );
+	sleep(2);
+	fprintf( stderr , "[System] but.....\n");
+	sleep(2);
+	fprintf( stderr , "[System]         I will..\n");
+	sleep(2);
+
+	struct timeval tempo;
+	tempo.tv_sec = 0;
+	tempo.tv_usec = 500;
+	select( 0 , 0 , 0 , 0 , &tempo );
 }

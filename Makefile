@@ -4,5 +4,8 @@ all:
 	gcc -std=c99 -Wall human.c -o human
 	gcc -std=c99 -Wall reset.c -o reset
 	gcc -std=c99 -Wall push_question.c -o push_question
+	gcc -std=c99 -Wall delete.c -o delete
 clean:
-	rm -f gamestart bacteria human reset push_question
+	rm -f gamestart bacteria human reset push_question delete
+	rm -f *~
+

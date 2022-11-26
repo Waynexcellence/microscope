@@ -18,7 +18,7 @@ char* self_name;
 Status self_status;
 
 void open_log(){
-	char buf[100] = "./log/bacteria_info.txt";
+	char buf[100] = "./log/bacteria.txt";
 	log_fd = open( buf , O_RDWR );
 	perror("open");
 }
