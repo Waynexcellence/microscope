@@ -14,6 +14,7 @@
 
 char human_info[30] = "./log/human.txt";
 char bacteria_info[30] = "./log/bacteria.txt";
+char bamboo_string[10] = "bamboo";
 
 char* character_input;
 char* enter_name;
@@ -24,6 +25,8 @@ int log_fd = -1;
 int num_account = -1;
 int mode = -1;
 int enter_ID = -1;
+
+Status new_role;
 
 void get_character_input(){
 	char buf[1000] = {};
@@ -125,9 +128,24 @@ void get_new_name(){
 	strcpy( new_name , buf );
 }
 
+bool check_bamboo( char* buf ){
+	int length = strlen(buf);
+	if( length < 6 ) return false;
+	for(int x=0;x<=length-5;x++){
+		char temp[10] = {};
+		for(int y=x;y<x+6;y++){
+			temp[y-x] = tolower( buf[y] );
+		}
+		if( strcmp( bamboo_string , temp ) == 0 ) return true;
+	}
+	return false;
+}
+
 void push_new_name(){
 	Status temp;
 	strcpy( temp.name , new_name );
+	if( character_input[0] == 'h' && check_bamboo(temp.name) ) temp.human_race = Bamboo;
+	else                                                       temp.human_race = Common;
 	temp.HP = rand()%91+10;
 	temp.ATK = rand()%21+10;
 	temp.Defense = rand()%11+10;
