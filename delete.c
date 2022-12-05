@@ -1,17 +1,4 @@
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <limits.h>
-#include <time.h>
-#include <sys/select.h>
-#include "status.h"
-#include "question.h"
+#include "general.c"
 
 char type_name[3][20] = { "human" , "bacteria" , "question" };
 int type = -1;
@@ -38,7 +25,6 @@ int get_type(){
 		}
 		if( find ) break;
 		fprintf( stderr , "[System] Error please enter again.\n");
-		sleep(1);
 		fprintf( stderr , "[System] Your answer:\n");
 	}
 	return -1;
@@ -68,38 +54,15 @@ void show_log(){
 	for(int x=0;x<num;x++){
 		if( type == 2 ){
 			read( fd , &question , sizeof(Question) );
-			fprintf( stderr , " #%d [Description] %s\n", x , question.description );
+			fprintf( stderr , " #%d [Description] \e[7m%s\e[0m\n", x , question.description );
 		}
 		else if( type == 0 || type == 1 ){
 			read( fd , &status , sizeof(Status) );
-			fprintf( stderr , " #%d [Name] %s\n", x , status.name );
+			fprintf( stderr , " #%d [Name] \e[7m%s\e[0m\n", x , status.name );
 		}
 		else	fprintf( stderr , "[System] Bug, Please notify the productor.\n");
 	}
 	fprintf( stderr , "\n");
-}
-
-int get_delete_number(){
-	char buf[100] = {};
-	int bytes = -1;
-	int temp = -1;
-	while( true ){
-		memset( buf , '\0' , 100 );
-		bytes = read( STDIN_FILENO , buf , sizeof(buf) );
-		if( bytes < 0 ){
-			fprintf( stderr , "[System] Fatal Error. Please notify the productor.\n");
-			exit(0);
-		}
-		fprintf( stderr , "\n");
-		sscanf( buf , "%d" , &temp );
-		if( temp >= num || type < 0 ){
-			fprintf( stderr , "[System] Please check the number you enter is in range.\n");
-			fprintf( stderr , "[System] Your answer:");
-			continue;
-		}
-		break;
-	}
-	return temp;
 }
 
 void modify_num(){
@@ -133,10 +96,27 @@ void delete_status(){
 }
 
 int main( int argc , char** argv ){
-	fprintf( stderr , "[System] Please enter the type you want to delete.( human / bacteria / question )\n");
-	sleep(1);
+	if( argc == 3 ){
+		if( strcmp(type_name[0],argv[1]) == 0 ) type = 0;
+		if( strcmp(type_name[1],argv[1]) == 0 ) type = 1;
+		if( type == -1 ){
+			fprintf( stderr , "[System] Fatal error, please notify the productor.\n");
+			exit(0);
+		}
+		fd = open_log();
+		num = get_num();
+		sscanf( argv[2] , "%d" , &delete_number );
+		modify_num();
+		delete_status();
+		return 0;
+	}
+	if( argc != 1 ){
+		fprintf( stderr , "[System] Fatal error, please notify the productor.\n");
+		exit(0);
+	}
+	fprintf( stderr , "[System] Please enter the type you want to delete.\e[4m( human / bacteria / question )\e[0m\n");
 	fprintf( stderr , "[System] Your answer:");
-
+	
 	type = get_type();
 	fd = open_log();
 	num = get_num();
@@ -150,16 +130,16 @@ int main( int argc , char** argv ){
 		return 0;
 	}
 	
-	sleep(1);
 	fprintf( stderr , "[System] These are your database.\n");
-	sleep(1);
 	show_log();
-	sleep(1);
-	fprintf( stderr , "[System] Please enter a number you want to delete.(#?)\n");
-	sleep(1);
+	fprintf( stderr , "[System] Please enter a number you want to delete.\e[4m(#?)\e[0m\n");
 	fprintf( stderr , "[System] Your answer:");
-
-	delete_number = get_delete_number();
+	
+	delete_number = get_user_number();
+	while( delete_number >= num || delete_number < 0 ){
+		fprintf( stderr , "[System] Please checck your number range.\n");
+		delete_number = get_user_number();
+	}
 
 	modify_num();
 	if( type == 2 )                   delete_question();

@@ -1,16 +1,19 @@
 #include "question.h"
+#include "status.h"
 #include <stdio.h>
-#include <string.h>
-#include <ctype.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <fcntl.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <limits.h>
 #include <time.h>
-#include <sys/select.h>
+#include <limits.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+
 
 bool compare_exit( char* buf ){
 	char Exit_string[10] = "exit";
@@ -19,13 +22,18 @@ bool compare_exit( char* buf ){
 	for(int x=0;x<4;x++){
 		buf[x] = tolower( buf[x] );
 	}
-	if( strcmp( Exit_string , buf ) == 0 ) return true;
+	if( strcmp( Exit_string , buf ) == 0 ){
+		fprintf( stderr , "[System] Bye bye~~~\n");
+		return true;
+	}
 	return false;
 }
 
 bool get_reply(){
 	char buf[100] = {};
-	read( STDIN_FILENO , buf , sizeof(buf) );
+	int bytes = read( STDIN_FILENO , buf , sizeof(buf) );
+	buf[bytes-1] = 0;
+	if( compare_exit(buf) ) exit(0);
 	if( buf[0] == 'y' || buf[0] == 'Y' ) return true;
 	return false;
 }
@@ -36,10 +44,8 @@ char get_choose(){
 		bool pass = true;
 		memset( buf , '\0' , 100 );
 		int bytes = read( STDIN_FILENO , buf , sizeof(buf) );
-		if( compare_exit(buf) ){
-			fprintf( stderr , "[Event] Bye bye~~~\n");
-			exit(0);
-		}
+		buf[bytes-1] = 0;
+		if( compare_exit(buf) ) exit(0);
 		if( bytes != 2 ){
 			fprintf( stderr , "[Event] Only key a letter is enough.\n");
 			pass = false;
@@ -55,27 +61,46 @@ char get_choose(){
 	return buf[0];
 }
 
-bool random_question( int* attribute ){
-	char buf[200] = {};
+int get_user_number(){
+	char buf[100] = {};
+	int bytes = -1;
+	int temp = -1;
+	while( true ){
+		memset( buf , '\0' , 100 );
+		bytes = read( STDIN_FILENO , buf , sizeof(buf) );
+		buf[bytes-1] = 0;
+		if( compare_exit(buf) ) exit(0);
+		if( bytes < 0 ){
+			fprintf( stderr , "[System] Fatal Error. Please notify the productor.\n");
+			exit(0);
+		}
+		fprintf( stderr , "\n");
+		sscanf( buf , "%d" , &temp );
+		break;
+	}
+	return temp;
+}
+
+bool random_question( int* attribute , bool human , bool bacteria , int question_num ){
 	char correct_answer = 'X';
 	int fd = open( "./log/question.txt" , O_RDONLY );
-	int num_question = -1;
-	int bacteria = rand()%4;
-	int question_position = rand() % num_question;
+	*attribute = ( human )? rand()%4 : rand()%3 ;
+	int question_position = rand() % question_num;
 	Question question;
 	*attribute = bacteria;
-
-	if     ( bacteria == 0 ) fprintf( stderr , "[Event] Bumping into a Smallpox, your HP will be taken because it cause you ill if WA.\n");
-	else if( bacteria == 1 ) fprintf( stderr , "[Event] Bumping into a HIV, your Defense will be weaker because your immunity system is affected if WA.\n");
-	else if( bacteria == 2 ) fprintf( stderr , "[Event] Bumping into a Neurotropic, your ATK will be less because of its nerve damage if WA.\n");
-	else if( bacteria == 3 ) fprintf( stderr , "[Event] Bumping into a COVID-19, your money will disappear because you buying many many mask if WA.\n");
+	if( human ){
+		if( *attribute == 0 ) fprintf( stderr , "[Event] Bumping into a Smallpox, your HP will be taken because it cause you ill if WA.\n");
+		if( *attribute == 1 ) fprintf( stderr , "[Event] Bumping into a HIV, your Defense will be weaker because your immunity system is affected if WA.\n");
+		if( *attribute == 2 ) fprintf( stderr , "[Event] Bumping into a Neurotropic, your ATK will be less because of its nerve damage if WA.\n");
+		if( *attribute == 3 ) fprintf( stderr , "[Event] Bumping into a COVID-19, your money will disappear because you buying many many mask if WA.\n");
+	}
+	if( bacteria ){
+		if( *attribute == 0 ) fprintf( stderr , "[Event] Bumping into a T cell, your HP will be taken because it attack you if WA.\n");
+		if( *attribute == 1 ) fprintf( stderr , "[Event] Bumping into a Antibiotic, your Defense will be weaker if WA.\n");
+		if( *attribute == 2 ) fprintf( stderr , "[Event] Bumping into a Alcohol, your ATK will be less if WA.\n");
+	}
 	sleep(2);
 
-	memset( buf , '\0' , 200 );
-	lseek( fd , 100*sizeof(Question) , SEEK_SET );
-	read( fd , buf , sizeof(buf) );
-	sscanf( buf , "%d" , &num_question );
-	
 	lseek( fd , question_position*sizeof(Question) , SEEK_SET );
 	read( fd , &question , sizeof(Question) );
 	
@@ -84,7 +109,7 @@ bool random_question( int* attribute ){
 	for(int x=0;x<question.type;x++){
 		appeared[x] = false;
 	}
-	fprintf( stderr , "[Description] %s\n", question.description );
+	fprintf( stderr , "[Description] \e[7m%s\e[0m\n", question.description );
 	fprintf( stderr , "[Option] ");
 	for(int x=0;x<question.type;x++){
 		char c = 'A' + x;
@@ -94,7 +119,7 @@ bool random_question( int* attribute ){
 			if( !appeared[should_appear] ) break;
 		}
 		if( should_appear == 0 ) correct_answer = 'A' + x;
-		fprintf( stderr , "(%c) %s ", c , question.option[should_appear] );
+		fprintf( stderr , "\e[4m(%c) %s\e[0m ", c , question.option[should_appear] );
 		appeared[should_appear] = true;
 	}
 	sleep(1);
@@ -109,42 +134,84 @@ bool random_question( int* attribute ){
 	return true;
 }
 
-void pass_away( char* character , int ID , char* name ){
-	char file_name[30] = {};
-	char buf[100] = {};
-	sprintf( file_name , "./log/%s_info.txt" , character );
-	int fd = open( file_name , O_RDWR );
-	int num_account = -1;
-	perror("open_log");
-	
-	lseek( fd , 10*sizeof(Status) , SEEK_SET );
-	memset( buf , '\0' , 100 );
-	read( fd , buf , sizeof(buf) );
-	sscanf( buf , "%d" , &num_account );
-	num_account --;
-	memset( buf , '\0' , 100 );
-	sprintf( buf , "%d" , num_account );
-	lseek( fd , 10*sizeof(Status) , SEEK_SET );
-	write( fd , buf , strlen(buf) );
-	
-	Status temp;
-	for(int x=ID+1;x<=num_account;x++){
-		lseek( fd , x*sizeof(Status) , SEEK_SET );
-		read( fd , &temp , sizeof(Status) );
-		lseek( fd , (-2)*sizeof(Status) , SEEK_CUR );
-		write( fd , &temp , sizeof(Status) );
-	}
-
-
-	fprintf( stderr , "[System] QQQQ dear %s you leave us a cherish memory QAQ.\n", name );
-	sleep(2);
-	fprintf( stderr , "[System] but.....\n");
-	sleep(2);
-	fprintf( stderr , "[System]         I will..\n");
-	sleep(2);
-
-	struct timeval tempo;
-	tempo.tv_sec = 0;
-	tempo.tv_usec = 500;
-	select( 0 , 0 , 0 , 0 , &tempo );
+void show_punishment(){
+/*                              |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    | */
+/*                              |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    | */
+/*                              |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    | */
+	fprintf( stderr , "  **  ***         ****      ****   ****      ****        **   *** \n");
+	fprintf( stderr , " *****   *      **   **      **     **     **   **     ****  *  **\n");
+	fprintf( stderr , "  **     **    **     **      *     *     **     **       * *   **\n");
+	fprintf( stderr , "  **     **    **      *      **    *     **      *       **      \n");
+	fprintf( stderr , "  **     **    *       *      **   *      *       *       *       \n");
+	fprintf( stderr , "  **     **    **********      *   *      **********      *       \n");
+	fprintf( stderr , "  **     **    *               **  *      *               *       \n");
+	fprintf( stderr , "  **     **    *               ** *       *               *       \n");
+	fprintf( stderr , "  **     **    **               ***       **        *     *       \n");
+	fprintf( stderr , "  **     **    **      *        ***       **       *      *       \n");
+	fprintf( stderr , "  **     **     **    *         **         **     *       *       \n");
+	fprintf( stderr , "  **     **       ****           *           ****      *******    \n");
+	sleep(3);
+	fprintf( stderr , "   ***** **      *****       **  ***       **  ***         *****   \n");
+	fprintf( stderr , "  **   ** *     **   **     *****   *     *****   *      **    **  \n");
+	fprintf( stderr , " **     *      **     **     **     **     **     **     *      *  \n");
+	fprintf( stderr , " **     *      *       *     **     **     **     **     *      *  \n");
+	fprintf( stderr , " **     *     **       **    **     **     **     **          ***  \n");
+	fprintf( stderr , "  **   **     **       **    **     **     **     **       ***  *  \n");
+	fprintf( stderr , "  ******      **       **    **     **     **     **     **     *  \n");
+	fprintf( stderr , " **           **       **    **     **     **     **    **      *  \n");
+	fprintf( stderr , " **            *       *     **     **     **     **    **      *  \n");
+	fprintf( stderr , "  *******      **     **     **     **     **     **    **      *  \n");
+	fprintf( stderr , " *      **      **   **      **     **     **     **     **   ***  \n");
+	fprintf( stderr , " *       **      *****      ****   ****   ****   ****     ****  ***\n");
+	fprintf( stderr , "**       * \n");
+	fprintf( stderr , " **     ** \n");
+	fprintf( stderr , "  ******   \n");
+	sleep(3);
+	fprintf( stderr , "   ***** **   ****      ****   ****      ****   \n");
+	fprintf( stderr , "  **   ** *      *       **     **     **   **  \n");
+	fprintf( stderr , " **     *        *        *     *     **     ** \n");
+	fprintf( stderr , " **     *        *        **    *     **      * \n");
+	fprintf( stderr , " **     *        *        **   *      *       * \n");
+	fprintf( stderr , "  **   **        *         *   *      **********\n");
+	fprintf( stderr , "  ******         *         **  *      *         \n");
+	fprintf( stderr , " **              *         ** *       *         \n");
+	fprintf( stderr , " **              *          ***       **        \n");
+	fprintf( stderr , "  *******        *          ***       **      * \n");
+	fprintf( stderr , " *      **       *          **         **    *  \n");
+	fprintf( stderr , " *       **   *******        *           ****   \n");
+	fprintf( stderr , "**       * \n");
+	fprintf( stderr , " **     ** \n");
+	fprintf( stderr , "  ******   \n");
+	sleep(1);
+	fprintf( stderr , "****   ****      *****      ***    *** \n");
+	fprintf( stderr , "  *     *       **   **      **     ** \n");
+	fprintf( stderr , "  *     *      **     **     **     ** \n");
+	fprintf( stderr , "  **    *      *       *     **     ** \n");
+	fprintf( stderr , "   *   *      **       **    **     ** \n");
+	fprintf( stderr , "   **  *      **       **    **     ** \n");
+	fprintf( stderr , "    *  *      **       **    **     ** \n");
+	fprintf( stderr , "    * *       **       **    **     ** \n");
+	fprintf( stderr , "    ***        *       *     **     ** \n");
+	fprintf( stderr , "     *         **     **     **     ** \n");
+	fprintf( stderr , "     *          **   **       *    ****\n");
+	fprintf( stderr , "     *           *****        ***** ** \n");
+	fprintf( stderr , "    * \n");
+	fprintf( stderr , " ** * \n");
+	fprintf( stderr , " ***  \n");
+	sleep(1);
+	fprintf( stderr , " ***     ***     ** ****   \n");
+	fprintf( stderr , "  **      **    ****    ** \n");
+	fprintf( stderr , "  **      **     **     ** \n");
+	fprintf( stderr , "  **      **     **      **\n");
+	fprintf( stderr , "  **      **     **      **\n");
+	fprintf( stderr , "  **      **     **      **\n");
+	fprintf( stderr , "  **      **     **      **\n");
+	fprintf( stderr , "  **      **     **      **\n");
+	fprintf( stderr , "  **      **     **      * \n");
+	fprintf( stderr , "  **      **     **     ** \n");
+	fprintf( stderr , "   *     ****    ***   **  \n");
+	fprintf( stderr , "   ****** **     ** ****   \n");
+	fprintf( stderr , "                 **        \n");
+	fprintf( stderr , "                 **        \n");
+	fprintf( stderr , "                *****      \n");
 }

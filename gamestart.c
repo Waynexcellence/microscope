@@ -1,20 +1,9 @@
-#include "status.h"
 #include "general.c"
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <time.h>
-#include <limits.h>
 
 char human_info[30] = "./log/human.txt";
 char bacteria_info[30] = "./log/bacteria.txt";
 char bamboo_string[10] = "bamboo";
+char alone_black_speed_bacteria[50] = "ustilago esculenta";
 
 char* character_input;
 char* enter_name;
@@ -39,10 +28,7 @@ void get_character_input(){
 		for(int x=0;x<bytes-1;x++){
 			buf[x] = tolower(buf[x]);
 		}
-		if( compare_exit(buf) ){
-			fprintf( stderr , "[System] Bye bye~~~\n");
-			exit( 0 );
-		}
+		if( compare_exit(buf) ) exit( 0 );
 		if( strcmp( buf , human ) == 0 ) break;
 		if( strcmp( buf , bacteria ) == 0 ) break;
 		fprintf( stderr , "[System] Character error please enter again.\n");
@@ -65,32 +51,27 @@ void show_account(){
 		fprintf( stderr , "[System] #1 : \n");
 	}
 	Status temp;
-	sleep(1);
 	lseek( log_fd , 0 , SEEK_SET );
 	for(int x=0;x<num_account;x++){
 		read( log_fd , &temp , sizeof(Status) );
-		fprintf( stderr , "[System] #%d : %s\n", x , temp.name );
+		fprintf( stderr , "[System] \e[7m#%d : %s\e[0m\n", x , temp.name );
 		strcpy( total_name[x] , temp.name );
 	}
 	fprintf( stderr , "\n" );
 }
 
 void get_mode(){
-	char buf[100] = {};
-	int bytes = -1;
+	int temp = -1;
 	while( true ){
-		memset( buf , '\0' , 100 );
-		bytes = read( STDIN_FILENO , buf , sizeof(buf) );
-		buf[bytes-1] = 0;
-		if( compare_exit(buf) ){
-			fprintf( stderr , "[System] Bye bye~~~\n");
-			exit( 0 );
+		temp = get_user_number();
+		if( temp < 0 || temp > 1 ){
+			fprintf( stderr , "[System] Please check your number range.\n");
+			fprintf( stderr , "[System] Your answer:");
+			continue;
 		}
-		if( bytes == 2 && buf[0] >= '0' && buf[0] <= '1' ) break;
-		fprintf( stderr , "[System] Mode select error please enter again.\n");
-		fprintf( stderr , "[System] Your answer:");
+		break;
 	}
-	mode = buf[0] - '0';
+	mode = temp;
 }
 
 void get_new_name(){
@@ -128,15 +109,16 @@ void get_new_name(){
 	strcpy( new_name , buf );
 }
 
-bool check_bamboo( char* buf ){
+bool check_special_string( char* buf , char* special ){
+	int special_length = strlen(special);
 	int length = strlen(buf);
-	if( length < 6 ) return false;
-	for(int x=0;x<=length-5;x++){
-		char temp[10] = {};
-		for(int y=x;y<x+6;y++){
+	if( length < special_length ) return false;
+	for(int x=0;x<=length-special_length;x++){
+		char temp[30] = {};
+		for(int y=x;y<x+special_length;y++){
 			temp[y-x] = tolower( buf[y] );
 		}
-		if( strcmp( bamboo_string , temp ) == 0 ) return true;
+		if( strcmp( special , temp ) == 0 ) return true;
 	}
 	return false;
 }
@@ -144,8 +126,10 @@ bool check_bamboo( char* buf ){
 void push_new_name(){
 	Status temp;
 	strcpy( temp.name , new_name );
-	if( character_input[0] == 'h' && check_bamboo(temp.name) ) temp.human_race = Bamboo;
-	else                                                       temp.human_race = Common;
+	if( character_input[0] == 'h' && check_special_string( temp.name , bamboo_string) )              temp.human_race = Bamboo;
+	else                                                                                             temp.human_race = Common;
+	if( character_input[0] == 'b' && check_special_string( temp.name , alone_black_speed_bacteria) ) temp.bacteria_race = Ustilago_esculenta_Henn;
+	else                                                                                             temp.bacteria_race = virus;
 	temp.HP = rand()%91+10;
 	temp.ATK = rand()%21+10;
 	temp.Defense = rand()%11+10;
@@ -170,10 +154,7 @@ void get_enter_ID(){
 		for( int x=0;x<bytes-1;x++){
 			temp[x] = tolower( temp[x] );
 		}
-		if( compare_exit(buf) ){
-			fprintf( stderr , "[System] Bye bye~~~\n");
-			exit( 0 );
-		}
+		if( compare_exit(buf) ) exit( 0 );
 		for(int x=0;x<num_account;x++){
 			if( strcmp( total_name[x] , buf ) == 0 ){
 				enter_ID = x;
@@ -200,24 +181,19 @@ int main(){
 	printf("\n");
 	sleep(1);
 	fprintf( stderr , "[System] Welcome to the Educcation Simulation Game.\n");
-	sleep(1);
-	fprintf( stderr , "[System] Please enter the character you want to play: (human/bacteria)\n");
-	sleep(1);
+	fprintf( stderr , "[System] Please enter the character you want to play: \e[4m(human/bacteria)\e[0m\n");
 	fprintf( stderr , "[System] Your answer:");
 	get_character_input();
 	if( character_input[0] == 'h' ) log_fd = open( human_info , O_RDWR );
 	else                            log_fd = open( bacteria_info , O_RDWR );
 	
 	fprintf( stderr , "\n" );
-	sleep(1);
 	get_num_account();
 	show_account();
 	
-	sleep(1);
 	fprintf( stderr , "[System] Now you want to play as a %s, you need to (log in / create a new role)\n", character_input );
-	fprintf( stderr , "[System] 0  for ( log in )\n");
-	fprintf( stderr , "[System] 1  for ( create )\n");
-	sleep(1);
+	fprintf( stderr , "[System] \e[4m0  for ( log in )\e[0m\n");
+	fprintf( stderr , "[System] \e[4m1  for ( create )\e[0m\n");
 	fprintf( stderr , "[System] Your answer:");
 
 	get_mode();
@@ -230,7 +206,6 @@ int main(){
 			return 0;
 		}
 		fprintf( stderr , "[System] Please enter the name you want to call your new character:(less 50)\n");
-		sleep(1);
 		fprintf( stderr , "[System] The new name:");
 		
 		get_new_name();
@@ -238,8 +213,7 @@ int main(){
 		fprintf( stderr , "\n");
 		show_account();
 
-		fprintf( stderr , "[System] Do you want to log in?(yes/no)\n");
-		sleep(1);
+		fprintf( stderr , "[System] Do you want to log in?\e[4m(yes/no)\e[0m\n");
 		fprintf( stderr , "[System] Your answer:");
 		
 		bool continue_enter = get_reply();
@@ -256,8 +230,7 @@ int main(){
 		fprintf( stderr , "[System] Please create an new account first.\n");
 		return 0;
 	}
-	fprintf( stderr , "[System] Please enter a character name to log in.\n");
-	sleep(1);
+	fprintf( stderr , "[System] Please enter \e[4ma character name\e[0m to log in.\n");
 	fprintf( stderr , "[System] Your name:");
 	
 	get_enter_ID();
@@ -266,7 +239,7 @@ int main(){
 	int pid = fork();
 	int child_status = -1;
 	if( pid == 0 ){
-		fprintf( stderr , "[System] Logging in (%s)(#%d) (%s)......\n", character_input , enter_ID , enter_name );
+		fprintf( stderr , "[System] Logging in (%s)(#%d) (%s) ............\n", character_input , enter_ID , enter_name );
 		sleep(1);
 		char exe_name[30] = {};
 		char enter_ID_string[5] = {};
