@@ -3,7 +3,7 @@
 char human_info[30] = "./log/human.txt";
 char bacteria_info[30] = "./log/bacteria.txt";
 char bamboo_string[10] = "bamboo";
-char alone_black_speed_bacteria[50] = "ustilago esculenta";
+char alone_black_bacteria[50] = "black";
 
 char* character_input;
 char* enter_name;
@@ -128,7 +128,7 @@ void push_new_name(){
 	strcpy( temp.name , new_name );
 	if( character_input[0] == 'h' && check_special_string( temp.name , bamboo_string) )              temp.human_race = Bamboo;
 	else                                                                                             temp.human_race = Common;
-	if( character_input[0] == 'b' && check_special_string( temp.name , alone_black_speed_bacteria) ) temp.bacteria_race = Ustilago_esculenta_Henn;
+	if( character_input[0] == 'b' && check_special_string( temp.name , alone_black_bacteria) ) temp.bacteria_race = Ustilago_esculenta_Henn;
 	else                                                                                             temp.bacteria_race = virus;
 	temp.HP = rand()%91+10;
 	temp.ATK = rand()%21+10;
