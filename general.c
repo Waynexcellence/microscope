@@ -150,7 +150,7 @@ void show_punishment(){
 	fprintf( stderr , "  **     **    **      *        ***       **       *      *       \n");
 	fprintf( stderr , "  **     **     **    *         **         **     *       *       \n");
 	fprintf( stderr , "  **     **       ****           *           ****      *******    \n");
-	sleep(3);
+	sleep(1);
 	fprintf( stderr , "   ***** **      *****       **  ***       **  ***         *****   \n");
 	fprintf( stderr , "  **   ** *     **   **     *****   *     *****   *      **    **  \n");
 	fprintf( stderr , " **     *      **     **     **     **     **     **     *      *  \n");
@@ -166,7 +166,7 @@ void show_punishment(){
 	fprintf( stderr , "**       * \n");
 	fprintf( stderr , " **     ** \n");
 	fprintf( stderr , "  ******   \n");
-	sleep(3);
+	sleep(1);
 	fprintf( stderr , "   ***** **   ****      ****   ****      ****   \n");
 	fprintf( stderr , "  **   ** *      *       **     **     **   **  \n");
 	fprintf( stderr , " **     *        *        *     *     **     ** \n");
@@ -198,7 +198,7 @@ void show_punishment(){
 	fprintf( stderr , "    * \n");
 	fprintf( stderr , " ** * \n");
 	fprintf( stderr , " ***  \n");
-	sleep(1);
+	sleep(0);
 	fprintf( stderr , " ***     ***     ** ****   \n");
 	fprintf( stderr , "  **      **    ****    ** \n");
 	fprintf( stderr , "  **      **     **     ** \n");
