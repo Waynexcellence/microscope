@@ -42,7 +42,7 @@ void get_status(){
 }
 
 void store_human_data(){
-	lseek( human_fd , /*-----*/self_ID*sizeof(Status) , SEEK_SET );
+	lseek( human_fd , attack_ID*sizeof(Status) , SEEK_SET );
 	write( human_fd , &human_status , sizeof(Status) );
 }
 
@@ -98,8 +98,10 @@ void bacteria_attack( bool* end ){
 	attack_to_human *= ( attack_to_human < 0 )? 0 : 1;
 	human_status.HP -= attack_to_human;
 	fprintf( stderr , "[Event] You attack %s cause \e[42m%d HP\e[40m damage\n" , human_status.name , attack_to_human );
+	store_human_data();
 	if( human_status.HP <= 0 ){
 		fprintf( stderr , "[Event] You successfully defeat %s.\n", human_status.name );
+		*end = true;
 		char attack_ID_string[10] = {};
 		sprintf( attack_ID_string , "%d" , attack_ID );
 		int child_status = -1;
@@ -172,6 +174,10 @@ int main(int argc , char** argv){
 	show_self_status();
 	
 	bool playing = true;
+	if( question_num == 0 && human_num == 0 ){
+		fprintf( stderr , "[System] There is no human and question.\n");
+		exit(0);
+	}
 	while( playing ){
 		int event = rand()%3;  /* answer question */ /* battle with human */
 		if( event >= 0 && event <= 1 && question_num > 0 ){
@@ -201,7 +207,7 @@ int main(int argc , char** argv){
 			}
 			store_bacteria_data();
 		}
-		if( event >= 2 && event <= 2 ){
+		if( event >= 2 && event <= 2 && human_num > 0 ){
 			fprintf( stderr , "[Event] You have to battle with a human.\n");
 			show_human( 0 );
 			fprintf( stderr , "[Event] Please select a human to attack.\e[4m(#?)\e[0m\n");
