@@ -161,6 +161,40 @@ void human_attack( bool* end ){
 	}
 }
 
+void HP_below_0( bool* end ){
+	if( self_status.human_race != Patient ){
+		*end = false;
+		fprintf( stderr , "[Event] your \e[42mHP\e[40m is <0 so you become a \e[7mpatient\e[0m from now on.\n");
+		fprintf( stderr , "[Event] Once you pass away again you will receive some punishment AWA\n");
+		self_status.human_race = Patient;
+		self_status.HP = rand()%5+5;
+		self_status.ATK /= 2;
+		self_status.Defense /= 2;
+		self_status.money /= 2;
+		show_self_status();
+	}
+	else{
+		*end = true;
+		fprintf( stderr , "[Event] QQ you are defeated by (%s) bacteria.\n", bacteria_status.name );
+		fprintf( stderr , "[Event] Do you remember the punishment ^^ ?\n");
+		sleep(1);
+		fprintf( stderr , "[Event] three\n");
+		sleep(1);
+		fprintf( stderr , "[Event] two\n");
+		sleep(1);
+		fprintf( stderr , "[Event] one\n");
+		sleep(1);
+		fprintf( stderr , "[Event] Go\n");
+		show_punishment();
+		fprintf( stderr , "[Event] Bye bye~\n");
+		int child_pid = fork();
+		int child_status = -1;
+		if( child_pid == 0 ) execl( "./delete" , "./delete" , "human" , self_ID_string , NULL );
+		wait( &child_status );
+		exit( 0 );
+	}
+}
+
 void bacteria_attack( bool* end ){
 	int attack_from_bacteria = bacteria_status.ATK-self_status.Defense;
 	attack_from_bacteria *= ( attack_from_bacteria < 0 )? 0 : 1;
@@ -168,36 +202,8 @@ void bacteria_attack( bool* end ){
 	fprintf( stderr , "[Event] You are attacked by \e[7m%s\e[0m \e[42m%d HP\e[40m\n" , bacteria_status.name , attack_from_bacteria );
 	show_self_status();
 	if( self_status.HP <= 0 ){
-		if( self_status.human_race != Patient ){
-			fprintf( stderr , "[Event] your HP is <0 so you become a patient from now on.\n");
-			fprintf( stderr , "[Event] Once you pass away again you will receive some punishment AWA\n");
-			self_status.human_race = Patient;
-			self_status.HP = rand()%5+5;
-			self_status.ATK /= 2;
-			self_status.Defense /= 2;
-			self_status.money /= 2;
-			show_self_status();
-		}
-		else{
-			*end = true;
-			fprintf( stderr , "[Event] QQ you are defeated by (%s) bacteria.\n", bacteria_status.name );
-			fprintf( stderr , "[Event] Do you remember the punishment ^^ ?\n");
-			sleep(1);
-			fprintf( stderr , "[Event] three\n");
-			sleep(1);
-			fprintf( stderr , "[Event] two\n");
-			sleep(1);
-			fprintf( stderr , "[Event] one\n");
-			sleep(1);
-			fprintf( stderr , "[Event] Go\n");
-			show_punishment();
-			fprintf( stderr , "[Event] Bye bye~\n");
-			int child_pid = fork();
-			int child_status = -1;
-			if( child_pid == 0 ) execl( "./delete" , "./delete" , "human" , self_ID_string , NULL );
-			wait( &child_status );
-			exit( 0 );
-		}
+		bool end = false;
+		HP_below_0( &end );
 	}
 }
 
@@ -286,7 +292,8 @@ int main(int argc , char** argv){
 				show_self_status();
 				
 				if( self_status.HP <= 0 ){
-					exit(0);
+					bool end = false;
+					HP_below_0( &end );
 				}
 			}
 		}
