@@ -89,15 +89,15 @@ bool random_question( int* attribute , bool human , bool bacteria , int question
 	Question question;
 	*attribute = bacteria;
 	if( human ){
-		if( *attribute == 0 ) fprintf( stderr , "[Event] Bumping into a Smallpox, your HP will be taken because it cause you ill if WA.\n");
-		if( *attribute == 1 ) fprintf( stderr , "[Event] Bumping into a HIV, your Defense will be weaker because your immunity system is affected if WA.\n");
-		if( *attribute == 2 ) fprintf( stderr , "[Event] Bumping into a Neurotropic, your ATK will be less because of its nerve damage if WA.\n");
-		if( *attribute == 3 ) fprintf( stderr , "[Event] Bumping into a COVID-19, your money will disappear because you buying many many mask if WA.\n");
+		if( *attribute == 0 ) fprintf( stderr , "[Event] Bumping into a Smallpox, your \e[42mHP\e[40m will be taken because it cause you ill if WA.\n");
+		if( *attribute == 1 ) fprintf( stderr , "[Event] Bumping into a HIV, your \e[46mDefense\e[40m will be weaker because your immunity system is affected if WA.\n");
+		if( *attribute == 2 ) fprintf( stderr , "[Event] Bumping into a Neurotropic, your \e[41mATK\e[40m will be less because of its nerve damage if WA.\n");
+		if( *attribute == 3 ) fprintf( stderr , "[Event] Bumping into a COVID-19, your \e[43mmoney\e[40m will disappear because you buying many many mask if WA.\n");
 	}
 	if( bacteria ){
-		if( *attribute == 0 ) fprintf( stderr , "[Event] Bumping into a T cell, your HP will be taken because it attack you if WA.\n");
-		if( *attribute == 1 ) fprintf( stderr , "[Event] Bumping into a Antibiotic, your Defense will be weaker if WA.\n");
-		if( *attribute == 2 ) fprintf( stderr , "[Event] Bumping into a Alcohol, your ATK will be less if WA.\n");
+		if( *attribute == 0 ) fprintf( stderr , "[Event] Bumping into a T cell, your \e[42mHP\e[40m will be taken because it attack you if WA.\n");
+		if( *attribute == 1 ) fprintf( stderr , "[Event] Bumping into a Antibiotic, your \e[46mDefense\e[40m will be weaker if WA.\n");
+		if( *attribute == 2 ) fprintf( stderr , "[Event] Bumping into a Alcohol, your \e[41mATK\e[40m will be less if WA.\n");
 	}
 	sleep(2);
 
