@@ -4,3 +4,4 @@ Final report
 增加問題 可以輸入 ./push_question
 刪除元素 可以輸入 ./delete
 重置     可以輸入 ./reset
+不知道   可以輸入 ./help
