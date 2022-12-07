@@ -198,7 +198,7 @@ void show_punishment(){
 	fprintf( stderr , "    * \n");
 	fprintf( stderr , " ** * \n");
 	fprintf( stderr , " ***  \n");
-	sleep(0);
+	sleep(1);
 	fprintf( stderr , " ***     ***     ** ****   \n");
 	fprintf( stderr , "  **      **    ****    ** \n");
 	fprintf( stderr , "  **      **     **     ** \n");
